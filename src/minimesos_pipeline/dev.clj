@@ -32,12 +32,10 @@
   ([] (stop-system @sys-map))
   ([sys-map]
    (let [http-conn (:http-conn sys-map)
-         myth (:run-thread sys-map)
-         plugth (:plugin-thread sys-map)]
+         myth (:run-thread sys-map)]
      (if (not= http-conn nil)
        (.stop http-conn))
-     (.stop myth)
-     (.stop plugth))))
+     (.stop myth))))
 
 (defn start-system []
   (let [ctx (get-new-context)
@@ -48,7 +46,8 @@
         {:context (:context ctx)
          :http-conn serv
          :run-thread myth
-         :plugin-thread (plugin/bootstrap-agents (:context ctx) plugin/agents-map)}
+         }
         ]
+    (plugin/bootstrap-agents (:context ctx) plugin/agents-map)
     (reset! sys-map sysm)
     sysm))
