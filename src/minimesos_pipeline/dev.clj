@@ -5,7 +5,8 @@
             [lambdacd.ui.ui-server :as ui]
             [lambdacd.util :as util]
             [minimesos-pipeline.pipeline :as pipeline]
-            [ring.server.standalone :as ring-server]))
+            [ring.server.standalone :as ring-server]
+            [minimesos-pipeline.plugin :as plugin]))
 
 (defonce sys-map (atom nil))
 
@@ -31,10 +32,12 @@
   ([] (stop-system @sys-map))
   ([sys-map]
    (let [http-conn (:http-conn sys-map)
-         myth (:run-thread sys-map)]
+         myth (:run-thread sys-map)
+         plugth (:plugin-thread sys-map)]
      (if (not= http-conn nil)
        (.stop http-conn))
-     (.stop myth))))
+     (.stop myth)
+     (.stop plugth))))
 
 (defn start-system []
   (let [ctx (get-new-context)
@@ -44,6 +47,8 @@
         sysm
         {:context (:context ctx)
          :http-conn serv
-         :run-thread myth }]
+         :run-thread myth
+         :plugin-thread (plugin/bootstrap-agents (:context ctx) plugin/agents-map)}
+        ]
     (reset! sys-map sysm)
     sysm))
