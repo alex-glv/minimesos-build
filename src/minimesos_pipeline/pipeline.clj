@@ -14,7 +14,15 @@
 
 (defn build [{cwd :cwd} ctx]
   (shell/bash ctx cwd
-              "echo hi!!!"))
+              "sh -c './gradlew build'"))
+
+
+(defn trigger-readthedocs [{cwd :cwd} ctx]
+  (shell/bash ctx cwd  "CURL -X POST 'https://readthedocs.org/build/minimesos'"))
+
+;; trigger jitpack
+;; trigger readthedocs
+;; update website
 
 (defn ^{:display-type :container} with-repo [& steps]
   (git/with-git minimesos-repo steps))
@@ -23,4 +31,7 @@
   `((either
      manualtrigger/wait-for-manual-trigger
      wait-for-repo)
-    (with-repo build)))
+    (with-repo build)
+    trigger-readthedocs))
+
+

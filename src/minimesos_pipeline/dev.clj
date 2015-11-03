@@ -28,7 +28,7 @@
     pipeline))
 
 (defn stop-system
-  ([] stop-system @sys-map)
+  ([] (stop-system @sys-map))
   ([sys-map]
    (let [http-conn (:http-conn sys-map)
          myth (:run-thread sys-map)]
@@ -42,7 +42,7 @@
         serv (start-server ui)
         myth (start-one-run-after-another-once ctx)
         sysm
-        {:ctx ctx
+        {:context (:context ctx)
          :http-conn serv
          :run-thread myth }]
     (reset! sys-map sysm)
