@@ -8,15 +8,15 @@
   "Starts thread that fetches updates from lambdacd events channel and updates agents. 
   Every step has respective agent. If no agent exists for the step, create and update agents map."
   [ctx]
-  (let [ch (go-loop []
+  (let [error-mode :continue
+        error-handler (fn [failed-agent ^Exception exception]
+                        (log/error (.getMessage exception)))
+        steps[:step-result-updated :step-finished]
+        agents (reset! agents (into {} (map #(vector % (agent {})) steps)))        
+        ch (go-loop []
              (let [publ (:event-publisher ctx)
                    {:keys [topic payload]} (<! publ)
-                   candidate-agent (get @agents topic)
-                   topic-agent (if (nil? candidate-agent)
-                                 (agent {})
-                                 candidate-agent)
-                   _ (if (nil? candidate-agent)
-                       (swap! agents assoc topic topic-agent))]
+                   topic-agent (get agents topic)]
                (log/info "Received payload update: " topic payload)
                (send-off topic-agent assoc :topic topic :payload payload))
              (recur))]
@@ -29,5 +29,5 @@
         candidate-agent (get @agents step)]
     (if (nil? candidate-agent)
       (throw (Exception. (str "Agent does not exist for step " step)))
-      (add-watch nUUID f))
+      (add-watch candidate-agent nUUID f))
     nUUID))
