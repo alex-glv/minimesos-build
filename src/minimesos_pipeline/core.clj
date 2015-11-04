@@ -1,12 +1,12 @@
 (ns minimesos-pipeline.core
-  (:require
-      [minimesos-pipeline.pipeline :as pipeline]
-      [ring.server.standalone :as ring-server]
-      [lambdacd.ui.ui-server :as ui]
-      [lambdacd.runners :as runners]
-      [lambdacd.util :as util]
-      [lambdacd.core :as lambdacd]
-      [clojure.tools.logging :as log])
+  (:require [clojure.tools.logging :as log]
+            [lambdacd.core :as lambdacd]
+            [lambdacd.runners :as runners]
+            [lambdacd.ui.ui-server :as ui]
+            [lambdacd.util :as util]
+            [minimesos-pipeline.pipeline :as pipeline]
+            [minimesos-pipeline.plugin :as plugin]
+            [ring.server.standalone :as ring-server])
   (:gen-class))
 
 
@@ -21,10 +21,10 @@
         ;; initialize and wire everything together
         pipeline (lambdacd/assemble-pipeline pipeline/pipeline config)
         ;; create a Ring handler for the UI
-        app (ui/ui-for pipeline)
-        ]
+        app (ui/ui-for pipeline)]
     ;; (log/log-capture! 'lambdacd.util)
     (log/info "LambdaCD Home Directory is " home-dir)
+    (plugin/bootstrap-agents (:context pipeline))
     ;; this starts the pipeline and runs one build after the other.
     ;; there are other runners and you can define your own as well.
     (runners/start-one-run-after-another pipeline)

@@ -2,27 +2,32 @@
   (:require [clojure.core.async :refer [go-loop <!]]
             [clojure.tools.logging :as log]))
 
-;; (on-steps trigger-readthedocs
-;;           slack-post)
-(defonce agents-map {:step-running (agent {})
-                     :step-success (agent {})
-                     :step-failure (agent {})
-                     :step-result-updated (agent {})
-                     :step-finished (agent {})})
+(defonce agents (atom {}))
 
-(defn bootstrap-agents [ctx agents-map]
+(defn bootstrap-agents
+  "Starts thread that fetches updates from lambdacd events channel and updates agents. 
+  Every step has respective agent. If no agent exists for the step, create and update agents map."
+  [ctx]
   (let [ch (go-loop []
              (let [publ (:event-publisher ctx)
                    {:keys [topic payload]} (<! publ)
-                   ag (get agents-map topic)]
+                   candidate-agent (get @agents topic)
+                   topic-agent (if (nil? candidate-agent)
+                                 (agent {})
+                                 candidate-agent)
+                   _ (if (nil? candidate-agent)
+                       (swap! agents assoc topic topic-agent))]
                (log/info "Received payload update: " topic payload)
-               (if (= ag nil)
-                 (log/error "No agent found for event " topic)
-                 (send-off (get agents-map topic) assoc :topic topic :payload payload)))
+               (send-off topic-agent assoc :topic topic :payload payload))
              (recur))]
-    ch))
+    agents))
 
-(defn on-step [step f]
-  (let [nUUID (java.util.UUID/randomUUID)]
-    (add-watch (get agents-map step) nUUID f)
+(defn on-step
+  "Subscribe to specific step event."
+  [step f]
+  (let [nUUID (java.util.UUID/randomUUID)
+        candidate-agent (get @agents step)]
+    (if (nil? candidate-agent)
+      (throw (Exception. (str "Agent does not exist for step " step)))
+      (add-watch nUUID f))
     nUUID))

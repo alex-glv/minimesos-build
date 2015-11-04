@@ -48,6 +48,6 @@
          :run-thread myth
          }
         ]
-    (plugin/bootstrap-agents (:context ctx) plugin/agents-map)
+    (plugin/bootstrap-agents (:context ctx))
     (reset! sys-map sysm)
     sysm))
