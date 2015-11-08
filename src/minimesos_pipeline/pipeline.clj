@@ -19,8 +19,7 @@
               "sh -c './gradlew build -x test -x buildDockerImage'"))
 
 (defn trigger-readthedocs [{cwd :cwd} ctx]
-  (shell/bash ctx cwd  "CURL -X POST 'https://readthedocs.org/build/minimesos'"))
-
+  (shell/bash ctx cwd  "curl -X POST 'https://readthedocs.org/build/minimesos'"))
 
 (defn trigger-jitpack [cd ctx]
   (let [revision (:revision cd)        
@@ -40,12 +39,16 @@
   (fn [args ctx]
     (log/info "With-repo args: " args)
     (if (nil? (:revision args))
-      (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch)
+      (if (not= nil (:pr-id args))
+        (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
+          (f args ctx))
+        (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
       (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
 
 (def pipeline
   `((either
      manualtrigger/wait-for-manual-trigger
+     manualtrigger/wait-for-pr
      wait-for-repo)
     (with-repo
       build
