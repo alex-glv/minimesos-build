@@ -6,7 +6,8 @@
             [lambdacd.util :as util]
             [minimesos-pipeline.pipeline :as pipeline]
             [ring.server.standalone :as ring-server]
-            [minimesos-pipeline.plugin :as plugin]))
+            [minimesos-pipeline.plugin :as plugin]
+            [minimesos-pipeline.slack :as slack]))
 
 (defonce sys-map (atom nil))
 

@@ -5,33 +5,50 @@
     [lambdacd.steps.manualtrigger :as manualtrigger]
     [lambdacd.steps.git :as git]
     [clojure.tools.logging :as log]
-    [lambdacd.steps.shell :as shell]))
+    [lambdacd.steps.shell :as shell]
+    [lambdacd.steps.support :as support]))
 
-(def minimesos-repo "git@github.com:ContainerSolutions/minimesos")
+(def minimesos-repo "https://github.com/ContainerSolutions/minimesos.git")
 
 (defn wait-for-repo [_ ctx]
-  (git/wait-for-git ctx minimesos-repo "master"))
+  (let [wait-result (git/wait-with-details ctx minimesos-repo "master")]
+    (assoc wait-result :revision (:revision wait-result))))
 
 (defn build [{cwd :cwd} ctx]
   (shell/bash ctx cwd
-              "sh -c './gradlew build'"))
-
+              "sh -c './gradlew build -x test -x buildDockerImage'"))
 
 (defn trigger-readthedocs [{cwd :cwd} ctx]
   (shell/bash ctx cwd  "CURL -X POST 'https://readthedocs.org/build/minimesos'"))
+
+
+(defn trigger-jitpack [cd ctx]
+  (let [revision (:revision cd)        
+        _ (log/info "Triggering jitpack, revision: " revision )
+        build-log (slurp (format "https://jitpack.io/com/github/ContainerSolutions/minimesos/%s/build.log" revision))
+        jp-success? (not= nil?
+                          (re-find #"BUILD SUCCESS" build-log))]
+    (log/info "Jitpack response: " jp-success?)
+    {:build-log build-log
+     :status (if jp-success? :success :fail)}))
 
 ;; trigger jitpack
 ;; trigger readthedocs
 ;; update website
 
 (defn ^{:display-type :container} with-repo [& steps]
-  (git/with-git minimesos-repo steps))
+  (fn [args ctx]
+    (log/info "With-repo args: " args)
+    (if (nil? (:revision args))
+      (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch)
+      (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
 
 (def pipeline
   `((either
      manualtrigger/wait-for-manual-trigger
      wait-for-repo)
-    (with-repo build)
-    trigger-readthedocs))
-
-
+    (with-repo
+      build
+      (in-parallel
+       trigger-jitpack
+       trigger-readthedocs))))
