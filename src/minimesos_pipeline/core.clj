@@ -7,6 +7,7 @@
             [ring.middleware.basic-authentication :refer [wrap-basic-authentication]]
             [minimesos-pipeline.pipeline :as pipeline]
             [minimesos-pipeline.plugin :as plugin]
+            [minimesos-pipeline.slack :as slack]
             [ring.server.standalone :as ring-server])
   (:gen-class))
 
@@ -30,8 +31,7 @@
                  (wrap-basic-authentication authenticated?))]
     (log/info "LambdaCD Home Directory is " home-dir)
     (plugin/bootstrap-agents (:context pipeline))
-    ;; this starts the pipeline and runs one build after the other.
-    ;; there are other runners and you can define your own as well.
+    (slack/bootstrap-slack [:step-finished] (System/getenv "SLACK_CHAN_ID") {:api-url "https://slack.com/api", :token (System/getenv "SLACK_TOKEN")})
     (runners/start-one-run-after-another pipeline)
     ;; start the webserver to serve the UI
     (reset! server (ring-server/serve app {:open-browser? false

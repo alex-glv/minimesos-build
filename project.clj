@@ -11,6 +11,7 @@
                  [ch.qos.logback/logback-classic "1.0.13"]
                  [org.julienxx/clj-slack "0.5.1"]]
 
-  :checkout-deps-shares [:source-paths :resource-paths :compile-path :target-path]
-  :profiles {:uberjar {:aot :all}}
-  :main minimesos-pipeline.dev)
+  :profiles {:uberjar {:aot :all}
+             :prod {:main minimesos-pipeline.core}}
+  :main minimesos-pipeline.dev
+  )

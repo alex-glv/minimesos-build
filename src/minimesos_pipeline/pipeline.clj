@@ -4,6 +4,7 @@
   (:require
     [lambdacd.steps.manualtrigger :as manualtrigger]
     [lambdacd.steps.git :as git]
+    [lambdacd.core  :as core]
     [clojure.tools.logging :as log]
     [lambdacd.steps.shell :as shell]
     [lambdacd.steps.support :as support]))
@@ -16,7 +17,7 @@
 
 (defn build [{cwd :cwd} ctx]
   (assoc (shell/bash ctx cwd
-                     "sh -c './gradlew build -x test -x buildDockerImage'")
+                     "sh -c './gradlew build'")
          :step-name "build"))
 
 (defn trigger-readthedocs [{cwd :cwd} ctx]
@@ -36,18 +37,7 @@
 ;; trigger jitpack
 ;; trigger readthedocs
 ;; update website
-
-(defn ^{:display-type :container} with-repo [& steps]
-  (fn [args ctx]
-    (log/info "With-repo args: " args)
-    (if (nil? (:revision args))
-      (cond
-        (not= nil (:pr-id args)) (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
-                                   (f (assoc args :step-name "with-pull-request") ctx))
-        (not= nil (:tag-id args)) (let [f (git/with-tag ctx minimesos-repo (:tag-id args) steps)]
-                                    (f (assoc args :step-name (str "with-tag-" (:tag-id args))) ctx))
-        :else (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
-      (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
+(declare with-repo)
 
 (def pipeline
   `((either
@@ -60,3 +50,20 @@
       (in-parallel
        trigger-jitpack
        trigger-readthedocs))))
+
+
+
+(defn ^{:display-type :container} with-repo [& steps]
+  (fn [args ctx]
+    (log/info "With-repo args: " args)
+    (core/retrigger pipeline ctx 1 '(1))
+    (if (nil? (:revision args))
+      (cond
+        (not= nil (:pr-id args)) (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
+                                   (f (assoc args :step-name "with-pull-request") ctx))
+        (not= nil (:tag-id args)) (let [f (git/with-tag ctx minimesos-repo (:tag-id args) steps)]
+                                    (f (assoc args :step-name (str "with-tag-" (:tag-id args))) ctx))
+        :else (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
+      (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
+
+
