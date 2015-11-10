@@ -9,7 +9,10 @@
                  [org.slf4j/slf4j-api "1.7.5"]
                  [ch.qos.logback/logback-core "1.0.13"]
                  [ch.qos.logback/logback-classic "1.0.13"]
-                 [org.julienxx/clj-slack "0.5.1"]]
+                 [org.julienxx/clj-slack "0.5.1"]
+                 [compojure "1.1.8"]
+                 [org.clojure/data.json "0.2.5"]
+                 [ring/ring-json "0.3.1"]]
 
   :profiles {:uberjar {:aot :all}
              :prod {:main minimesos-pipeline.core}}

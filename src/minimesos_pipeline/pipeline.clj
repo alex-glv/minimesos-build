@@ -39,17 +39,22 @@
 ;; update website
 (declare with-repo)
 
-(def pipeline
-  `((either
-     manualtrigger/wait-for-manual-trigger
-     manualtrigger/wait-for-pr
-     manualtrigger/wait-for-tag
-     wait-for-repo)
-    (with-repo
+(def common-steps
+  `(with-repo
       build
       (in-parallel
        trigger-jitpack
-       trigger-readthedocs))))
+       trigger-readthedocs)))
+
+(def pipeline
+  (concat 
+   `((either
+      manualtrigger/wait-for-manual-trigger
+      manualtrigger/wait-for-pr
+      manualtrigger/wait-for-tag
+      wait-for-repo)
+     )
+   common-steps))
 
 
 
