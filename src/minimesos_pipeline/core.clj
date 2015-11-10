@@ -4,6 +4,7 @@
             [lambdacd.runners :as runners]
             [lambdacd.ui.ui-server :as ui]
             [lambdacd.util :as util]
+            [ring.middleware.basic-authentication :refer [wrap-basic-authentication]]
             [minimesos-pipeline.pipeline :as pipeline]
             [minimesos-pipeline.plugin :as plugin]
             [ring.server.standalone :as ring-server])
@@ -11,6 +12,10 @@
 
 
 (defonce server (atom nil))
+
+(defn authenticated? [name pass]
+  (and (= name (System/getenv "AUTH_UNAME"))
+       (= pass (System/getenv "AUTH_PASSWD"))))
 
 (defn -main [& args]
   (let [;; the home dir is where LambdaCD saves all data.
@@ -21,8 +26,8 @@
         ;; initialize and wire everything together
         pipeline (lambdacd/assemble-pipeline pipeline/pipeline config)
         ;; create a Ring handler for the UI
-        app (ui/ui-for pipeline)]
-    ;; (log/log-capture! 'lambdacd.util)
+        app (->  (ui/ui-for pipeline)
+                 (wrap-basic-authentication authenticated?))]
     (log/info "LambdaCD Home Directory is " home-dir)
     (plugin/bootstrap-agents (:context pipeline))
     ;; this starts the pipeline and runs one build after the other.

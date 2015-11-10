@@ -41,16 +41,19 @@
   (fn [args ctx]
     (log/info "With-repo args: " args)
     (if (nil? (:revision args))
-      (if (not= nil (:pr-id args))
-        (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
-          (f (assoc args :step-name "with-pull-request") ctx))
-        (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
+      (cond
+        (not= nil (:pr-id args)) (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
+                                   (f (assoc args :step-name "with-pull-request") ctx))
+        (not= nil (:tag-id args)) (let [f (git/with-tag ctx minimesos-repo (:tag-id args) steps)]
+                                    (f (assoc args :step-name (str "with-tag-" (:tag-id args))) ctx))
+        :else (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
       (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
 
 (def pipeline
   `((either
      manualtrigger/wait-for-manual-trigger
      manualtrigger/wait-for-pr
+     manualtrigger/wait-for-tag
      wait-for-repo)
     (with-repo
       build
