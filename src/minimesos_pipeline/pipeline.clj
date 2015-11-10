@@ -12,14 +12,15 @@
 
 (defn wait-for-repo [_ ctx]
   (let [wait-result (git/wait-with-details ctx minimesos-repo "master")]
-    (assoc wait-result :revision (:revision wait-result))))
+    (assoc wait-result :revision (:revision wait-result) :step-name "Github trigger")))
 
 (defn build [{cwd :cwd} ctx]
-  (shell/bash ctx cwd
-              "sh -c './gradlew build -x test -x buildDockerImage'"))
+  (assoc (shell/bash ctx cwd
+                     "sh -c './gradlew build -x test -x buildDockerImage'")
+         :step-name "build"))
 
 (defn trigger-readthedocs [{cwd :cwd} ctx]
-  (shell/bash ctx cwd  "curl -X POST 'https://readthedocs.org/build/minimesos'"))
+  (assoc (shell/bash ctx cwd  "curl -X POST 'https://readthedocs.org/build/minimesos'") :step-name "trigger-readthedocs"))
 
 (defn trigger-jitpack [cd ctx]
   (let [revision (:revision cd)        
@@ -29,6 +30,7 @@
                           (re-find #"BUILD SUCCESS" build-log))]
     (log/info "Jitpack response: " jp-success?)
     {:build-log build-log
+     :step-name "trigger-jitpack"
      :status (if jp-success? :success :fail)}))
 
 ;; trigger jitpack
@@ -41,7 +43,7 @@
     (if (nil? (:revision args))
       (if (not= nil (:pr-id args))
         (let [f (git/with-pull-request ctx minimesos-repo (:pr-id args) steps)]
-          (f args ctx))
+          (f (assoc args :step-name "with-pull-request") ctx))
         (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
       (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
 
