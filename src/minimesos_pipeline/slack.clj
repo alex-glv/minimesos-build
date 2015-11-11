@@ -21,14 +21,15 @@
                      (let [topic (:topic message)
                            payload (:payload message)
                            _ (log/info "Logging to " chan " with " conn " payload " payload)]
-                       (chat/post-message conn chan
-                                          (str "Build " (:build-number payload)
-                                               " update step: " (if (= topic :step-finished) (:step-name (:final-result payload)) (:step-id payload))
-                                               " result: "
-                                               (if (= topic :step-finished)
-                                                 (name (:status (:final-result payload)))
-                                                 topic))
-                                          {:username "minimesos-CD"})))]
+                       (if (not= topic :step-killed)
+                         (chat/post-message conn chan
+                                            (str "(Build " (:build-number payload)
+                                                 ") " (if (= topic :step-finished) (:step-name (:final-result payload)) (:step-id payload))
+                                                 " result: "
+                                                 (if (= topic :step-finished)
+                                                   (name (:status (:final-result payload)))
+                                                   topic))
+                                            {:username "minimesos-CD"}))))]
       (minimesos-pipeline.plugin/on-step step watch-fn ))))
 
 (defn bootstrap-slack [steps channel-id connection]

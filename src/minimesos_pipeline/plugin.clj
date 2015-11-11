@@ -17,7 +17,7 @@
              (let [publ (:event-publisher ctx)
                    {:keys [topic payload]} (<! publ)
                    topic-agent (get agents topic)]
-               (log/info "Received payload update: " topic payload)
+               (log/debug "Received payload update: " topic payload)
                (if (nil? topic-agent)
                  (log/error "No agent for topic: " topic)
                  (send-off topic-agent assoc :topic topic :payload payload)))
