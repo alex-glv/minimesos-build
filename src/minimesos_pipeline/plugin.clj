@@ -11,8 +11,8 @@
   (let [error-mode :continue
         error-handler (fn [failed-agent ^Exception exception]
                         (log/error (.getMessage exception)))
-        steps [:step-result-updated :step-finished]
-        agents (reset! agents (into {} (map #(vector % (agent {})) steps)))        
+        steps [:step-result-updated :step-finished :tag-trigger :pr-trigger]
+        agents (reset! agents (into {} (map #(vector % (agent {})) steps))) 
         ch (doseq [c ctx]
              (go-loop []
                (let [publ (:event-publisher c)
