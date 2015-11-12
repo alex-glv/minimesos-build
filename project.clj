@@ -1,7 +1,7 @@
 (defproject minimesos-pipeline "0.1.0-SNAPSHOT"
   :description "minimesos build pipeline"
   :url ""
-  :dependencies [[lambdacd "0.5.7-SNAPSHOT"]
+  :dependencies [[lambdacd "0.5.6"]
                  [ring-server "0.3.1"]
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.0"]

@@ -4,6 +4,7 @@
   (:require
    [clojure.core.async :as async]
    [lambdacd.steps.manualtrigger :as manualtrigger]
+   [minimesos-pipeline.steps :as steps]
    [lambdacd.internal.execution :as execution]
    [lambdacd.steps.git :as git]
    [lambdacd.internal.pipeline-state :as pipeline-state]
@@ -82,21 +83,22 @@
     (log/info "With-repo args: " args)
     (if (nil? (:revision args))
       (cond
-        (not= nil (:pr-id args)) ((git/with-pull-request ctx minimesos-repo (:pr-id args) steps) args ctx)
-        (not= nil (:tag-id args)) ((git/with-tag ctx minimesos-repo (:tag-id args) steps) args ctx)
-        :else (git/checkout-and-execute minimesos-repo "master" args ctx steps :branch))
+        (not= nil (:pr-id args)) (steps/with-pull-request ctx args minimesos-repo (:pr-id args) steps)
+        (not= nil (:tag-id args)) (steps/with-tag ctx args minimesos-repo (:tag-id args) steps)
+        :else (git/checkout-and-execute minimesos-repo "master" args ctx steps))
       (git/checkout-and-execute minimesos-repo (:revision args) args ctx steps))))
+
 
 (defn get-pipeline
   ([] (get-pipeline :manual))
   ([exec-type]
    (let [pl `((with-repo
+                github-task
                 compile-sources
                 ;; run-tests
                 ;; build-docker
-                (in-parallel
-                 trigger-jitpack
-                 trigger-readthedocs)))]
+                trigger-readthedocs
+                trigger-jitpack))]
      (if (= :manual exec-type)
        `((either wait-for-repo manualtrigger/wait-for-manual-trigger) ~@pl)
        pl))))
