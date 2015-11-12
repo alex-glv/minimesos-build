@@ -14,9 +14,6 @@
   (reset! channel chan))
 
 (defn subscribe-to [steps]
-  (chat/post-message @connection @channel
-                     (str "Initializing pipeline...")
-                     {:username "minimesos-CD"})
   (doseq [step steps]
     (let [conn @connection
           chan @channel

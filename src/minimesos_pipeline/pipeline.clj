@@ -88,7 +88,7 @@
   ([] (get-pipeline :manual))
   ([exec-type]
    (let [pl `((with-repo
-                ;; github-task
+                github-task
                 compile-sources
                 run-tests
                 build-docker
