@@ -53,11 +53,11 @@
 
 (defn github-task [args ctx]
   (cond
-    (not= nil (:pr-id args)) {:status :success :step-name (str "Checking out PR: " (:pr-id args))}
-    (not= nil (:tag-id args)) {:status :success :step-name (str "Checking out tag: " (:tag-id args))}
+    (not= nil (:pr-id args)) {:status :success :out "" :step-name (str "Checking out PR: " (:pr-id args))}
+    (not= nil (:tag-id args)) {:status :success :out "" :step-name (str "Checking out tag: " (:tag-id args))}
     :else (if (nil? (:revision args))
-            {:status :success :step-name (str "Checking out master branch ")}
-            {:status :success :step-name (str "Fetching revision: " (:revision args))})))
+            {:status :success :out "" :step-name (str "Checking out master branch ")}
+            {:status :success :out "" :step-name (str "Fetching revision: " (:revision args))})))
 
 ;; trigger jitpack
 ;; trigger readthedocs
@@ -75,8 +75,7 @@
                                      :build-number build-number}))))))
 
 (defn report [msg]
-  (fn [args ctx]
-    {:status :success :step-name msg}))
+  {:status :success :step-name msg})
 
 (defn ^{:display-type :container} with-repo [& steps]
   (fn [args ctx]
@@ -92,16 +91,12 @@
   ([] (get-pipeline :manual))
   ([exec-type]
    (let [pl `((with-repo
-                github-task
                 compile-sources
-                (report "Compilation completed... Running tests.")
                 run-tests
-                (report "Tests complete... Building docker image.")
                 build-docker
-                (report "Docker image complete. Updating the docs and jitpack build")
                 (in-parallel
                  trigger-jitpack
                  trigger-readthedocs)))]
      (if (= :manual exec-type)
-       `(wait-for-repo ~@pl)
+       `((either wait-for-repo manualtrigger/wait-for-manual-trigger) ~@pl)
        pl))))

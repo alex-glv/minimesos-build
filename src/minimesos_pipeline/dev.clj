@@ -15,19 +15,18 @@
 (defn start-one-run-after-another-once
   "Runner that always keeps one pipeline-run active. It waits for a run to complete, then starts a new one."
   [{pipeline-def :pipeline-def context :context}]
-  (let [th (Thread. #(;; exec/run pipeline-def context
-                       ))
+  (let [th (Thread. #(exec/run pipeline-def context))
         _ (.start th)]
     th))
 
 (defn start-server [app]  
   )
 
-(defn get-new-context []
+(defn get-new-context [pipeline-type]
   (let [home-dir (util/create-temp-dir)
         config {:home-dir home-dir
                 :name     "minimesos pipeline"} 
-        pipeline (lambdacd/assemble-pipeline (pipeline/get-pipeline) config)]
+        pipeline (lambdacd/assemble-pipeline (pipeline/get-pipeline pipeline-type) config)]
     pipeline))
 
 (defn stop-system
@@ -44,19 +43,22 @@
      (.stop myth))))
 
 (defn start-system []
-  (let [ctx (get-new-context)
-        ui (ui/ui-for ctx)
+  (let [manual-ctx (get-new-context :manual)
+        auto-ctx (get-new-context :auto)
+        ui (ui/ui-for manual-ctx)
         webui-server (ring-server/serve ui {:open-browser? false
                                             :port          8080})
-        api-server (ring-server/serve (api/rest-api (:context ctx)) {:open-browser? false
+        api-server (ring-server/serve (api/rest-api (:context auto-ctx))
+                                      {:open-browser? false
                                           :port 8000})
-        myth (start-one-run-after-another-once ctx)
+        myth (start-one-run-after-another-once  manual-ctx)
         sysm
-        {:context (:context ctx)
+        {:auto-context (:context auto-ctx)
+         :manual-context (:context manual-ctx)
          :webui webui-server
          :api api-server
          :run-thread myth
          }]
-    (plugin/bootstrap-agents (:context ctx))
+    (plugin/bootstrap-agents (:context auto-ctx) (:context manual-ctx))
     (reset! sys-map sysm)
     sysm))

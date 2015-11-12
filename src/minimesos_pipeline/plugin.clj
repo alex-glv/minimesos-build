@@ -7,21 +7,22 @@
 (defn bootstrap-agents
   "Starts thread that fetches updates from lambdacd events channel and updates agents. 
   Every step has respective agent. If no agent exists for the step, create and update agents map."
-  [ctx]
+  [ & ctx]
   (let [error-mode :continue
         error-handler (fn [failed-agent ^Exception exception]
                         (log/error (.getMessage exception)))
         steps [:step-result-updated :step-finished]
         agents (reset! agents (into {} (map #(vector % (agent {})) steps)))        
-        ch (go-loop []
-             (let [publ (:event-publisher ctx)
-                   {:keys [topic payload]} (<! publ)
-                   topic-agent (get agents topic)]
-               (log/debug "Received payload update: " topic payload)
-               (if (nil? topic-agent)
-                 (log/error "No agent for topic: " topic)
-                 (send-off topic-agent assoc :topic topic :payload payload)))
-             (recur))]
+        ch (doseq [c ctx]
+             (go-loop []
+               (let [publ (:event-publisher c)
+                     {:keys [topic payload]} (<! publ)
+                     topic-agent (get agents topic)]
+                 (log/debug "Received payload update: " topic payload)
+                 (if (nil? topic-agent)
+                   (log/error "No agent for topic: " topic)
+                   (send-off topic-agent assoc :topic topic :payload payload)))
+               (recur)))]
     agents))
 
 (defn on-step
