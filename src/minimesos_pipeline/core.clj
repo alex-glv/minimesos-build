@@ -27,20 +27,21 @@
         config {:home-dir home-dir
                 :name     "minimesos pipeline"}
         ;; initialize and wire everything together
-        pipeline (lambdacd/assemble-pipeline (pipeline/get-pipeline :auto) config)
+        auto-pipeline (lambdacd/assemble-pipeline (pipeline/get-pipeline :auto) config)
+        man-pipeline (lambdacd/assemble-pipeline (pipeline/get-pipeline :manual) config)
         ;; create a Ring handler for the UI
-        app (->  (ui/ui-for pipeline)
+        app (->  (ui/ui-for man-pipeline)
                  (wrap-basic-authentication authenticated?))]
     (log/info "LambdaCD Home Directory is " home-dir)
-    (plugin/bootstrap-agents (:context pipeline))
-    (slack/bootstrap-slack [:step-finished] (System/getenv "SLACK_CHAN_ID") {:api-url "https://slack.com/api", :token (System/getenv "SLACK_TOKEN")})
+    (plugin/bootstrap-agents (:context auto-pipeline))
+    (slack/bootstrap-slack [:step-finished :step-result-updated] (System/getenv "SLACK_CHAN_ID") {:api-url "https://slack.com/api", :token (System/getenv "SLACK_TOKEN")})
     ;; (runners/start-one-run-after-another pipeline)
     ;; start the webserver to serve the UI
     (reset! server
             (ring-server/serve app {:open-browser? false
                                     :port (read-string (or (System/getenv "SERVE_WEBUI_PORT") "8080" ))}))
     (reset! api-server
-            (ring-server/serve (api/rest-api (:context pipeline)) {:open-browser? false
+            (ring-server/serve (api/rest-api (:context auto-pipeline)) {:open-browser? false
                                                :port (read-string (or (System/getenv "SERVE_API_PORT") "8081" ))}))))
 
 

@@ -75,7 +75,8 @@
                                      :build-number build-number}))))))
 
 (defn report [msg]
-  {:status :success :step-name msg})
+  (fn [args ctx]
+    {:status :success :step-name msg}))
 
 (defn ^{:display-type :container} with-repo [& steps]
   (fn [args ctx]
