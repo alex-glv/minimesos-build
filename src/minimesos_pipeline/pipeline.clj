@@ -92,8 +92,8 @@
   ([exec-type]
    (let [pl `((with-repo
                 compile-sources
-                run-tests
-                build-docker
+                ;; run-tests
+                ;; build-docker
                 (in-parallel
                  trigger-jitpack
                  trigger-readthedocs)))]
