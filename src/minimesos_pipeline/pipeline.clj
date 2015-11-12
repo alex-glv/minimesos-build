@@ -71,8 +71,11 @@
                      runnable-pipeline
                      args
                      (merge context {:result-channel (async/chan (async/dropping-buffer 0))
-                                                                          :step-id []
-                                                                          :build-number build-number}))))))
+                                     :step-id []
+                                     :build-number build-number}))))))
+
+(defn report [msg]
+  {:status :success :step-name msg})
 
 (defn ^{:display-type :container} with-repo [& steps]
   (fn [args ctx]
@@ -90,8 +93,11 @@
    (let [pl `((with-repo
                 github-task
                 compile-sources
+                (report "Compilation completed... Running tests.")
                 run-tests
+                (report "Tests complete... Building docker image.")
                 build-docker
+                (report "Docker image complete. Updating the docs and jitpack build")
                 (in-parallel
                  trigger-jitpack
                  trigger-readthedocs)))]
