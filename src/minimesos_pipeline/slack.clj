@@ -22,14 +22,16 @@
                            payload (:payload message)
                            _ (log/info "Logging to " chan " with " conn " payload " payload)]
                        (chat/post-message conn chan
-                                          (str "(Build " (:build-number payload)
-                                               ") " (if (= topic :step-finished) (:step-name (:final-result payload)) (:step-id payload))
-                                               " result: "
-                                               (if (= topic :step-finished)
-                                                 (name (:status (:final-result payload)))
-                                                 (if (or (= topic :pr-trigger) (= topic :tag-trigger))
-                                                   (:step-name (:final-result payload))
-                                                   topic)))
+                                          (if (:build-number payload)
+                                            (str "(Build" (:build-number payload) ") "
+                                                 (if (= topic :step-finished) (:step-name (:final-result payload)) (:step-id payload))
+                                                 " result: "
+                                                 (if (= topic :step-finished)
+                                                   (name (:status (:final-result payload)))
+                                                   (if (or (= topic :pr-trigger) (= topic :tag-trigger))
+                                                     (:step-name (:final-result payload))
+                                                     topic)))
+                                            (str (:step-name (:final-result payload))))
                                           {:username "minimesos-CD"})))]
       (minimesos-pipeline.plugin/on-step step watch-fn ))))
 
