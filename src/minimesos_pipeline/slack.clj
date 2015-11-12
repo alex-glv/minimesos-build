@@ -27,7 +27,9 @@
                                                " result: "
                                                (if (= topic :step-finished)
                                                  (name (:status (:final-result payload)))
-                                                 topic))
+                                                 (if (or (= topic :pr-trigger) (= topic :tag-trigger))
+                                                   (:step-name payload)
+                                                   topic)))
                                           {:username "minimesos-CD"})))]
       (minimesos-pipeline.plugin/on-step step watch-fn ))))
 
