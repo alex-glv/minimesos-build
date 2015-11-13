@@ -21,17 +21,18 @@
        "/api" []
        (POST "/slack-github/build"
              {body :body}
-             (let [body-text (slurp body)
-                   body-parsed (into {} (map #(string/split % #"=") (string/split body-text  #"\n")))
-                   [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #" ")]
-               (log/info "Slack request: " body-parsed)
-               (case trigger-type
-                 "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
-                          (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
-                 "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
-                           (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
-                 :else nil
-                 (json {:status :success}))))
+             (do (log/info "Slack request: " (slurp body))
+                 (let [body-text (slurp body)
+                       body-parsed (into {} (map #(string/split % #"=") (string/split body-text  #"\n")))
+                       [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #" ")]
+                   (log/info "Slack request: " body-parsed)
+                   (case trigger-type
+                     "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
+                              (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
+                     "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
+                               (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
+                     :else nil
+                     (json {:status :success})))))
 
        (POST "/github/commit" []
              (do
