@@ -17,33 +17,26 @@
    :status 200 })
 
 (defn rest-api [ctx]
-  (-> (context "/api" []
-               (POST "/slack-github/tag" {{text :text trigger :trigger_word} :params :as data}
-                     (do
-                       (log/info "Slack build request with " text trigger)
-                       (let [tag-request (string/split text #" ")
-                             tag (second tag-request)]
-                         (if tag
-                           (do  (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " tag)}})
-                                (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id tag})
-                                (json {:status :success}))
-                           (json {:status :failed})))))
+  (-> (context
+       "/api" []
+       (POST "/slack-github/build"
+             {{text :text} :params :as data}
+             (do
+               (log/info "Slack request: " data)
+               (let [[trigger-word trigger-type identifier] (string/split text #" ")]
+                 (log/info "Triggers: " trigger-word trigger-type identifier (string/split text #" "))
+                 (case trigger-type
+                   "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
+                            (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
+                   "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
+                             (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
+                   :else nil))
+               (json {:status :success})))
 
-               (POST "/slack-github/pr" {{text :text trigger :trigger_word} :params :as data}
-                     (do
-                       (log/info "Slack build request with " data)
-                       (let [pr-request (string/split text #" ")
-                             pr-no (second pr-request)]
-                         (if pr-no
-                           (do  (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " pr-no)}})
-                                (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id pr-no})
-                                (json {:status :success}))
-                           (json {:status :failed})))))
-               
-               (POST "/github/commit" []
-                     (do
-                       (pipeline/run-async (pipeline/get-pipeline :auto) ctx {})
-                       (json {:status :success}))))
+       (POST "/github/commit" []
+             (do
+               (pipeline/run-async (pipeline/get-pipeline :auto) ctx {})
+               (json {:status :success})))
+       )
       ring-kw/wrap-keyword-params
-      ring-json/wrap-json-params
-      ))
+      ring-json/wrap-json-params))
