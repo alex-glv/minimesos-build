@@ -20,23 +20,24 @@
   (-> (context
        "/api" []
        (POST "/slack-github/build"
-             {{text :text} :params :as data}
-             (do
-               (log/info "Slack request: " data)
-               (let [[trigger-word trigger-type identifier] (string/split text #" ")]
-                 (log/info "Triggers: " trigger-word trigger-type identifier (string/split text #" "))
-                 (case trigger-type
-                   "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
-                            (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
-                   "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
-                             (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
-                   :else nil))
-               (json {:status :success})))
+             {body :body}
+             (let [body-text (slurp body)
+                   body-parsed (into {} (map #(string/split % #"=") (string/split body-text  #"\n")))
+                   [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #" ")]
+               (log/info "Slack request: " body-parsed)
+               (case trigger-type
+                 "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
+                          (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
+                 "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
+                           (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
+                 :else nil
+                 (json {:status :success}))))
 
        (POST "/github/commit" []
              (do
                (pipeline/run-async (pipeline/get-pipeline :auto) ctx {})
                (json {:status :success})))
        )
-      ring-kw/wrap-keyword-params
-      ring-json/wrap-json-params))
+      ;; ring-kw/wrap-keyword-params
+      ;; ring-json/wrap-json-params
+      ))
