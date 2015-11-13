@@ -18,7 +18,7 @@
 
 (defn rest-api [ctx]
   (-> (context "/api" []
-               (POST "/slack-github/tag" {{text "text" trigger "trigger"} :json-params :as data}
+               (POST "/slack-github/tag" {{text "text" trigger "trigger_word"} :json-params :as data}
                      (do
                        (log/info "Slack build request with " text trigger (re-find #"build-tag " text))
                        (let [tag-request (string/split text #" ")
@@ -29,7 +29,7 @@
                                 (json {:status :success}))
                            (json {:status :failed})))))
 
-               (POST "/slack-github/pr" {{text "text" trigger "trigger"} :json-params :as data}
+               (POST "/slack-github/pr" {{text "text" trigger "trigger_word"} :json-params :as data}
                      (do
                        (log/info "Slack build request with " data)
                        (let [pr-request (string/split text #" ")
