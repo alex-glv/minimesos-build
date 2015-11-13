@@ -21,11 +21,11 @@
        "/api" []
        (POST "/slack-github/build"
              {body :body}
-             (do (log/info "Slack request: " (slurp body))
+             (do (log/info "Slack request: "  body)
                  (let [body-text (slurp body)
                        body-parsed (into {} (map #(string/split % #"=") (string/split body-text  #"&")))
-                       [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #"\\+")]
-                   (log/info "Slack request: " body-parsed)
+                       [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #"\+")]
+                   (log/info "Slack request: " body-parsed trigger-word trigger-type identifier (get body-parsed "text"))
                    (case trigger-type
                      "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
                               (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
@@ -40,5 +40,6 @@
                (json {:status :success})))
        )
       ;; ring-kw/wrap-keyword-params
-      ;; ring-json/wrap-json-params
+      (ring-json/wrap-json-body {:keywords? true})
+      
       ))
