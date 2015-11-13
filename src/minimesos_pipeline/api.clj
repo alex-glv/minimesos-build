@@ -20,7 +20,7 @@
   (-> (context "/api" []
                (POST "/slack-github/tag" {{text "text" trigger "trigger_word"} :json-params :as data}
                      (do
-                       (log/info "Slack build request with " text trigger (re-find #"build-tag " text))
+                       (log/info "Slack build request with " text trigger)
                        (let [tag-request (string/split text #" ")
                              tag (second tag-request)]
                          (if tag
