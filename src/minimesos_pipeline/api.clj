@@ -31,8 +31,8 @@
                               (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:pr-id identifier}))
                      "tag" (do (event-bus/publish ctx :tag-trigger {:final-result {:status :success :step-name (str "Building tag " identifier)}})
                                (pipeline/run-async (pipeline/get-pipeline :auto) ctx {:tag-id identifier}))
-                     :else nil
-                     (json {:status :success})))))
+                     :else nil)
+                   (json {:status :success}))))
 
        (POST "/github/commit" []
              (do
