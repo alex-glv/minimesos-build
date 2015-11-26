@@ -21,7 +21,7 @@
 (defn report [publisher msg]
   (log/info "Called report with " publisher msg)
   (slack/send-message msg)
-  ;; (async/>!! publisher {:topic :info :payload msg})
+  (async/>!! publisher {:topic :info :payload msg})
   )
 
 (def minimesos-repo "https://github.com/ContainerSolutions/minimesos.git")
@@ -87,15 +87,17 @@
       (async/thread (execution/execute-steps
                      runnable-pipeline
                      args
-                     (merge context {:result-channel (async/chan (async/dropping-buffer 0))
-                                     :step-id []
-                                     :build-number build-number}))))))
+                     (let [new-ctx (merge context {:result-channel (async/chan (async/dropping-buffer 100))
+                                                   :step-id []
+                                                   :build-number build-number})
+                           _ (plg/bootstrap-agents new-ctx)]
+                       new-ctx))))))
 
 
 
 (defn ^{:display-type :container} with-repo [& steps]
   (fn [args ctx]
-    (plg/bootstrap-agents ctx)
+    
     (log/info "With-repo args: " args)
     (if (nil? (:revision args))
       (cond
