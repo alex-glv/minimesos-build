@@ -70,11 +70,11 @@
 
 (defn github-task [args ctx]
   (cond
-    (not= nil (:pr-id args)) {:status :success :out "" :step-name (str "Checking out PR: " (:pr-id args))}
-    (not= nil (:tag-id args)) {:status :success :out "" :step-name (str "Checking out tag: " (:tag-id args))}
+    (not= nil (:pr-id args)) {:status :success :out "" :step-name (str "Checking out PR: " (:pr-id args)) :exit 0}
+    (not= nil (:tag-id args)) {:status :success :out "" :step-name (str "Checking out tag: " (:tag-id args)) :exit 0}
     :else (if (nil? (:revision args))
-            {:status :success :out "" :step-name (str "Checking out master branch ")}
-            {:status :success :out "" :step-name (str "Fetching revision: " (:revision args))})))
+            {:status :success :out "" :step-name (str "Checking out master branch ") :exit 0}
+            {:status :success :out "" :step-name (str "Fetching revision: " (:revision args)) :exit 0})))
 
 ;; trigger jitpack
 ;; trigger readthedocs
