@@ -59,6 +59,6 @@
          :api api-server
          :run-thread myth
          }]
-    (plugin/bootstrap-agents (:context auto-ctx) (:context manual-ctx))
+    (plugin/bootstrap-agents (:context auto-ctx))
     (reset! sys-map sysm)
     sysm))
