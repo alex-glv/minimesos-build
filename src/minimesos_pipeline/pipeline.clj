@@ -68,13 +68,13 @@
      :step-name "trigger-jitpack"
      :status (if jp-success? :success :fail)}))
 
-;; (defn github-task [args ctx]
-;;   (cond
-;;     (not= nil (:pr-id args)) {:status :success :out "" :step-name (str "Checking out PR: " (:pr-id args))}
-;;     (not= nil (:tag-id args)) {:status :success :out "" :step-name (str "Checking out tag: " (:tag-id args))}
-;;     :else (if (nil? (:revision args))
-;;             {:status :success :out "" :step-name (str "Checking out master branch ")}
-;;             {:status :success :out "" :step-name (str "Fetching revision: " (:revision args))})))
+(defn github-task [args ctx]
+  (cond
+    (not= nil (:pr-id args)) {:status :success :out "" :step-name (str "Checking out PR: " (:pr-id args))}
+    (not= nil (:tag-id args)) {:status :success :out "" :step-name (str "Checking out tag: " (:tag-id args))}
+    :else (if (nil? (:revision args))
+            {:status :success :out "" :step-name (str "Checking out master branch ")}
+            {:status :success :out "" :step-name (str "Fetching revision: " (:revision args))})))
 
 ;; trigger jitpack
 ;; trigger readthedocs
