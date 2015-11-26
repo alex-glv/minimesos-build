@@ -20,7 +20,7 @@
 
 (defn report [publisher msg]
   (log/info "Called report with " publisher msg)
-  (slack/send-message msg)
+  ;; (slack/send-message msg)
   (async/>!! publisher {:topic :info :payload msg})
   )
 
