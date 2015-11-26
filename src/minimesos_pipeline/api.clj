@@ -24,7 +24,8 @@
              (do (log/info "Slack request: "  body)
                  (let [body-text (slurp body)
                        body-parsed (into {} (map #(string/split % #"=") (string/split body-text  #"&")))
-                       [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #"\+")]
+                       [trigger-word trigger-type identifier] (string/split (get body-parsed "text") #"\+")
+                       identifier (java.net.URLDecoder/decode identifier)]
                    (log/info "Slack request: " body-parsed trigger-word trigger-type identifier (get body-parsed "text"))
                    (case trigger-type
                      "pr" (do (event-bus/publish ctx :pr-trigger {:final-result {:status :success :step-name (str "Building pr " identifier)}})
