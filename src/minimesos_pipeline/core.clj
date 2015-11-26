@@ -34,7 +34,7 @@
                  (wrap-basic-authentication authenticated?))]
     (log/info "LambdaCD Home Directory is " home-dir)
     (plugin/bootstrap-agents (:context auto-pipeline))
-    (slack/bootstrap-slack [:step-finished :info] (System/getenv "SLACK_CHAN_ID") {:api-url "https://slack.com/api", :token (System/getenv "SLACK_TOKEN")})
+    (slack/bootstrap-slack [:step-finished :info :pr-trigger :tag-trigger] (System/getenv "SLACK_CHAN_ID") {:api-url "https://slack.com/api", :token (System/getenv "SLACK_TOKEN")})
     (runners/start-one-run-after-another man-pipeline)
     ;; start the webserver to serve the UI
     (reset! server

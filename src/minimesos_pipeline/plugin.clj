@@ -10,7 +10,7 @@
   [ctx]
   (let [error-handler (fn [failed-agent ^Exception exception]
                         (log/error (.getMessage exception)))
-        steps [:step-result-updated :step-finished :info]
+        steps [:step-result-updated :step-finished :info :pr-trigger :tag-trigger]
         agents (reset! agents (into {} (map #(vector % (agent {})) steps)))
         _ (doall (map (fn [[_ a]] (set-error-handler! a error-handler)) agents))
         _ (doall (map (fn [[_ a]] (set-error-mode! a :continue)) agents))
