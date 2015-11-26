@@ -38,11 +38,9 @@
       (minimesos-pipeline.plugin/on-step step watch-fn))))
 
 (defn send-message [msg]
-  (chat/post-message @connection @channel msg))
+  (chat/post-message @connection @channel msg {:username "minimesos-CD"}))
 
 (defn bootstrap-slack [steps channel-id connection]
   (dosync (set-conn! connection)
           (set-chan! channel-id)
           (subscribe-to steps)))
-
-
